@@ -1,0 +1,18 @@
+{
+  "name": "cmake-zig",
+  "version": "1.0.0",
+  "description": "Zig bridge for CMake",
+  "files": [
+    "*.cmake"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holepunchto/cmake-zig.git"
+  },
+  "author": "Holepunch",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/holepunchto/cmake-zig/issues"
+  },
+  "homepage": "https://github.com/holepunchto/cmake-zig#readme"
+}
