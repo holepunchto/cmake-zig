@@ -177,7 +177,7 @@ function(add_zig_module)
 
   zig_target(target_triple)
 
-  set(zig_build_dir "${CMAKE_CURRENT_BINARY_DIR}/zig-build/${ZIG_NAME}")
+  set(zig_build_dir "${CMAKE_CURRENT_BINARY_DIR}/_zig/${ZIG_NAME}")
   set(zig_cache_dir "${zig_build_dir}/zig-cache")
   set(zig_out_dir "${zig_build_dir}/zig-out")
 
