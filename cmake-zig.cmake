@@ -3,13 +3,10 @@ include_guard()
 set(zig_module_dir "${CMAKE_CURRENT_LIST_DIR}")
 
 function(find_zig result)
-  find_program(ZIG_EXECUTABLE zig)
+  find_program(zig NAMES zig REQUIRED)
 
-  if(NOT ZIG_EXECUTABLE)
-    message(FATAL_ERROR "Zig executable not found. Please install Zig or set ZIG_EXECUTABLE.")
-  endif()
+  set(${result} ${zig})
 
-  set(${result} ${ZIG_EXECUTABLE})
   return(PROPAGATE ${result})
 endfunction()
 
