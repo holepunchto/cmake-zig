@@ -148,7 +148,7 @@ endfunction()
 
 function(add_zig_module)
   set(options SHARED)
-  set(oneValueArgs NAME PATH TARGET BUILD_MODE ARTIFACT_NAME)
+  set(oneValueArgs NAME PATH TARGET OPTIMIZE ARTIFACT_NAME)
   set(multiValueArgs BUILD_OPTIONS)
   cmake_parse_arguments(ZIG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -164,8 +164,8 @@ function(add_zig_module)
     set(ZIG_TARGET ${ZIG_NAME})
   endif()
 
-  if(NOT ZIG_BUILD_MODE)
-    zig_optimize(ZIG_BUILD_MODE)
+  if(NOT ZIG_OPTIMIZE)
+    zig_optimize(ZIG_OPTIMIZE)
   endif()
 
   set(build_zig_path "${ZIG_PATH}/build.zig")
@@ -186,7 +186,7 @@ function(add_zig_module)
     --cache-dir ${zig_cache_dir}
     --prefix ${zig_out_dir}
     -Dtarget=${target_triple}
-    -Doptimize=${ZIG_BUILD_MODE}
+    -Doptimize=${ZIG_OPTIMIZE}
   )
 
   foreach(option ${ZIG_BUILD_OPTIONS})

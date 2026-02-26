@@ -34,7 +34,7 @@ add_zig_module(
   NAME <name>
   [PATH <path>]
   [TARGET <target>]
-  [BUILD_MODE <mode>]
+  [OPTIMIZE <mode>]
   [ARTIFACT_NAME <artifact>]
   [BUILD_OPTIONS <options>...]
   [SHARED]
@@ -48,7 +48,7 @@ add_zig_module(
 | `NAME` | Yes | - | Name of the Zig module (used for build target naming) |
 | `PATH` | No | `CMAKE_CURRENT_SOURCE_DIR` | Path to directory containing `build.zig` |
 | `TARGET` | No | Same as `NAME` | CMake target name for the imported library |
-| `BUILD_MODE` | No | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode |
+| `OPTIMIZE` | No | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode |
 | `ARTIFACT_NAME` | No | Same as `NAME` | Name of the output library artifact |
 | `BUILD_OPTIONS` | No | - | Additional options passed to `zig build` |
 | `SHARED` | No | Off | Build as shared library instead of static |
