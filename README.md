@@ -38,15 +38,14 @@ add_zig_module(
 
 #### Arguments
 
-| Argument        | Required | Default                               | Description                                           |
-| --------------- | -------- | ------------------------------------- | ----------------------------------------------------- |
-| `name`          | Yes      | -                                     | Name of the Zig module (used for build target naming) |
-| `PATH`          | No       | `CMAKE_CURRENT_LIST_DIR`              | Path to directory containing `build.zig`              |
-| `TARGET`        | No       | Same as `name`                        | CMake target name for the imported library            |
-| `OPTIMIZE`      | No       | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode                                 |
-| `ARTIFACT_NAME` | No       | Same as `name`                        | Name of the output library artifact                   |
-| `BUILD_OPTIONS` | No       | -                                     | Additional options passed to `zig build`              |
-| `SHARED`        | No       | Off                                   | Build as shared library instead of static             |
+| Argument        | Default                               | Description                                |
+| --------------- | ------------------------------------- | ------------------------------------------ |
+| `PATH`          | `CMAKE_CURRENT_LIST_DIR`              | Path to directory containing `build.zig`   |
+| `TARGET`        | Same as `name`                        | CMake target name for the imported library |
+| `OPTIMIZE`      | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode                      |
+| `ARTIFACT_NAME` | Same as `name`                        | Name of the output library artifact        |
+| `BUILD_OPTIONS` | -                                     | Additional options passed to `zig build`   |
+| `SHARED`        | Off                                   | Build as shared library instead of static  |
 
 #### Build Mode Mapping
 
