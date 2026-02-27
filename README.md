@@ -40,7 +40,7 @@ add_zig_module(
 
 | Argument        | Required | Default                               | Description                                           |
 | --------------- | -------- | ------------------------------------- | ----------------------------------------------------- |
-| `NAME`          | Yes      | -                                     | Name of the Zig module (used for build target naming) |
+| `name`          | Yes      | -                                     | Name of the Zig module (used for build target naming) |
 | `PATH`          | No       | `CMAKE_CURRENT_LIST_DIR`              | Path to directory containing `build.zig`              |
 | `TARGET`        | No       | Same as `name`                        | CMake target name for the imported library            |
 | `OPTIMIZE`      | No       | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode                                 |
