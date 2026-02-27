@@ -137,138 +137,160 @@ function(zig_version result)
 
   execute_process(
     COMMAND ${zig_exe} version
-    OUTPUT_VARIABLE version_output
+    OUTPUT_VARIABLE version
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET
   )
 
-  set(${result} ${version_output})
+  set(${result} ${version})
+
   return(PROPAGATE ${result})
 endfunction()
 
-function(add_zig_module)
-  set(options SHARED)
-  set(oneValueArgs NAME PATH TARGET OPTIMIZE ARTIFACT_NAME)
-  set(multiValueArgs BUILD_OPTIONS)
-  cmake_parse_arguments(ZIG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if(NOT ZIG_NAME)
-    message(FATAL_ERROR "add_zig_module: NAME is required")
-  endif()
-
-  if(NOT ZIG_PATH)
-    set(ZIG_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-  endif()
-
-  if(NOT ZIG_TARGET)
-    set(ZIG_TARGET ${ZIG_NAME})
-  endif()
-
-  if(NOT ZIG_OPTIMIZE)
-    zig_optimize(ZIG_OPTIMIZE)
-  endif()
-
-  set(build_zig_path "${ZIG_PATH}/build.zig")
-  if(NOT EXISTS ${build_zig_path})
-    message(FATAL_ERROR "add_zig_module: build.zig not found at ${build_zig_path}")
-  endif()
-
-  find_zig(zig_exe)
-
-  zig_target(target_triple)
-
-  set(zig_build_dir "${CMAKE_CURRENT_BINARY_DIR}/_zig/${ZIG_NAME}")
-  set(zig_cache_dir "${zig_build_dir}/zig-cache")
-  set(zig_out_dir "${zig_build_dir}/zig-out")
-
-  set(zig_build_command
-    ${zig_exe} build
-    --cache-dir ${zig_cache_dir}
-    --prefix ${zig_out_dir}
-    -Dtarget=${target_triple}
-    -Doptimize=${ZIG_OPTIMIZE}
+function(add_zig_module name)
+  set(option_keywords
+    SHARED
   )
 
-  foreach(option ${ZIG_BUILD_OPTIONS})
-    list(APPEND zig_build_command ${option})
-  endforeach()
+  set(one_value_keywords
+    PATH
+    TARGET
+    OPTIMIZE
+    ARTIFACT_NAME
+  )
 
-  set(build_zig_zon_path "${ZIG_PATH}/build.zig.zon")
-  set(fetch_command)
-  if(EXISTS ${build_zig_zon_path})
-    set(fetch_command COMMAND ${CMAKE_COMMAND} -E chdir ${ZIG_PATH} ${zig_exe} build --fetch)
+  set(multi_value_kewords
+    BUILD_OPTIONS
+  )
+
+  cmake_parse_arguments(
+    PARSE_ARGV 1 ARGV "${option_keywords}" "${one_value_keywords}" "${multi_value_keywords}"
+  )
+
+  if(ARGV_PATH)
+    cmake_path(ABSOLUTE_PATH ARGV_PATH BASE_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" NORMALIZE)
+  else()
+    set(ARGV_PATH "${CMAKE_CURRENT_LIST_DIR}")
   endif()
 
-  if(NOT ZIG_ARTIFACT_NAME)
-    set(ZIG_ARTIFACT_NAME ${ZIG_NAME})
+  if(NOT ARGV_TARGET)
+    set(ARGV_TARGET ${name})
   endif()
 
-  set(lib_name "lib${ZIG_ARTIFACT_NAME}")
+  if(DEFINED ARGV_OPTIMIZE)
+    set(optimize ${ARGV_OPTIMIZE})
+  else()
+    zig_optimize(optimize)
+  endif()
+
+  set(build_zig_path "${ARGV_PATH}/build.zig")
+
+  if(NOT EXISTS ${build_zig_path})
+    message(FATAL_ERROR "No build.zig file found at '${build_zig_path}'")
+  endif()
+
+  find_zig(zig)
+
+  zig_target(target)
+
+  set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/_zig/${name}")
+  set(cache_dir "${build_dir}/cache")
+  set(out_dir "${build_dir}/out")
+
+  set(build_command
+    "${zig}" build
+    --cache-dir "${cache_dir}"
+    --prefix "${out_dir}"
+    -Dtarget=${target}
+    -Doptimize=${optimize}
+  )
+
+  if(DEFINED ARGV_BUILD_OPTIONS)
+    list(APPEND build_command ${ARGV_BUILD_OPTIONS})
+  endif()
+
+  set(fetch_command "${zig}" build --fetch)
+
+  if(NOT ARGV_ARTIFACT_NAME)
+    set(ARGV_ARTIFACT_NAME ${name})
+  endif()
+
+  set(lib_name "lib${ARGV_ARTIFACT_NAME}")
+
   if(WIN32)
-    if(ZIG_SHARED)
+    if(ARGV_SHARED)
       set(lib_suffix ".dll")
       set(import_suffix ".lib")
     else()
       set(lib_suffix ".lib")
     endif()
-  else()
-    if(ZIG_SHARED)
-      if(APPLE)
-        set(lib_suffix ".dylib")
-      else()
-        set(lib_suffix ".so")
-      endif()
+  elseif(ARGV_SHARED)
+    if(APPLE)
+      set(lib_suffix ".dylib")
     else()
-      set(lib_suffix ".a")
+      set(lib_suffix ".so")
     endif()
+  else()
+    set(lib_suffix ".a")
   endif()
-  set(lib_path "${zig_out_dir}/lib/${lib_name}${lib_suffix}")
+
+  set(lib_path "${out_dir}/lib/${lib_name}${lib_suffix}")
 
   add_custom_command(
-    OUTPUT ${lib_path}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${zig_build_dir}
-    ${fetch_command}
-    COMMAND ${CMAKE_COMMAND} -E chdir ${ZIG_PATH} ${zig_build_command}
-    COMMENT "Building Zig module ${ZIG_NAME}"
+    OUTPUT "${lib_path}"
+    COMMAND ${fetch_command}
+    COMMAND ${build_command}
+    WORKING_DIRECTORY "${ARGV_PATH}"
     VERBATIM
   )
 
-  add_custom_target(${ZIG_NAME}_build DEPENDS ${lib_path})
+  add_custom_target(${name}_build DEPENDS "${lib_path}")
 
-  if(ZIG_SHARED)
-    add_library(${ZIG_TARGET} SHARED IMPORTED GLOBAL)
+  if(ARGV_SHARED)
+    add_library(${ARGV_TARGET} SHARED IMPORTED GLOBAL)
   else()
-    add_library(${ZIG_TARGET} STATIC IMPORTED GLOBAL)
+    add_library(${ARGV_TARGET} STATIC IMPORTED GLOBAL)
   endif()
-  add_dependencies(${ZIG_TARGET} ${ZIG_NAME}_build)
 
-  set_target_properties(${ZIG_TARGET} PROPERTIES
-    IMPORTED_LOCATION ${lib_path}
+  add_dependencies(${ARGV_TARGET} ${name}_build)
+
+  set_target_properties(
+    ${ARGV_TARGET}
+    PROPERTIES
+    IMPORTED_LOCATION "${lib_path}"
   )
 
-  if(EXISTS "${ZIG_PATH}/include")
-    set_property(TARGET ${ZIG_TARGET} APPEND PROPERTY
-      INTERFACE_INCLUDE_DIRECTORIES "${ZIG_PATH}/include"
+  if(EXISTS "${ARGV_PATH}/include")
+    target_include_directories(
+      ${ARGV_TARGET}
+      INTERFACE
+        "${ARGV_PATH}/include"
     )
   endif()
 
-  if(EXISTS "${zig_out_dir}/include")
-    set_property(TARGET ${ZIG_TARGET} APPEND PROPERTY
-      INTERFACE_INCLUDE_DIRECTORIES "${zig_out_dir}/include"
+  if(EXISTS "${out_dir}/include")
+    target_include_directories(
+      ${ARGV_TARGET}
+      INTERFACE
+        "${out_dir}/include"
     )
   endif()
 
-  if(WIN32 AND ZIG_SHARED)
-    set_target_properties(${ZIG_TARGET} PROPERTIES
-      IMPORTED_IMPLIB "${zig_out_dir}/lib/${lib_name}${import_suffix}"
+  if(WIN32 AND ARGV_SHARED)
+    set_target_properties(
+      ${ARGV_TARGET}
+      PROPERTIES
+      IMPORTED_IMPLIB "${out_dir}/lib/${lib_name}${import_suffix}"
     )
   endif()
 
-  set_target_properties(${ZIG_TARGET} PROPERTIES
-    ZIG_MODULE_NAME ${ZIG_NAME}
-    ZIG_MODULE_PATH ${ZIG_PATH}
-    ZIG_BUILD_DIR ${zig_build_dir}
-    ZIG_OUT_DIR ${zig_out_dir}
-    ZIG_ARTIFACT_NAME ${ZIG_ARTIFACT_NAME}
+  set_target_properties(
+    ${ARGV_TARGET}
+    PROPERTIES
+    ZIG_MODULE_NAME ${name}
+    ZIG_MODULE_PATH "${ARGV_PATH}"
+    ZIG_BUILD_DIR "${build_dir}"
+    ZIG_OUT_DIR "${out_dir}"
+    ZIG_ARTIFACT_NAME ${ARGV_ARTIFACT_NAME}
   )
 endfunction()

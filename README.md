@@ -2,9 +2,7 @@
 
 CMake integration for building Zig libraries. Provides functions to locate Zig, detect target platforms, and build Zig modules that can be linked into CMake projects.
 
-## Installation
-
-```sh
+```
 npm i cmake-zig
 ```
 
@@ -15,15 +13,12 @@ In your `CMakeLists.txt`:
 ```cmake
 find_package(cmake-zig REQUIRED PATHS node_modules/cmake-zig)
 
-add_zig_module(
-  NAME my_zig_lib
-  PATH ${CMAKE_CURRENT_SOURCE_DIR}
-)
+add_zig_module(my_zig_lib)
 
 target_link_libraries(my_target PRIVATE my_zig_lib)
 ```
 
-## Functions
+## API
 
 ### `add_zig_module`
 
@@ -31,7 +26,7 @@ Builds a Zig project and creates an imported CMake library target.
 
 ```cmake
 add_zig_module(
-  NAME <name>
+  <name>
   [PATH <path>]
   [TARGET <target>]
   [OPTIMIZE <mode>]
@@ -43,32 +38,30 @@ add_zig_module(
 
 #### Arguments
 
-| Argument | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NAME` | Yes | - | Name of the Zig module (used for build target naming) |
-| `PATH` | No | `CMAKE_CURRENT_SOURCE_DIR` | Path to directory containing `build.zig` |
-| `TARGET` | No | Same as `NAME` | CMake target name for the imported library |
-| `OPTIMIZE` | No | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode |
-| `ARTIFACT_NAME` | No | Same as `NAME` | Name of the output library artifact |
-| `BUILD_OPTIONS` | No | - | Additional options passed to `zig build` |
-| `SHARED` | No | Off | Build as shared library instead of static |
+| Argument        | Required | Default                               | Description                                           |
+| --------------- | -------- | ------------------------------------- | ----------------------------------------------------- |
+| `NAME`          | Yes      | -                                     | Name of the Zig module (used for build target naming) |
+| `PATH`          | No       | `CMAKE_CURRENT_LIST_DIR`              | Path to directory containing `build.zig`              |
+| `TARGET`        | No       | Same as `name`                        | CMake target name for the imported library            |
+| `OPTIMIZE`      | No       | Auto-detected from `CMAKE_BUILD_TYPE` | Zig optimization mode                                 |
+| `ARTIFACT_NAME` | No       | Same as `name`                        | Name of the output library artifact                   |
+| `BUILD_OPTIONS` | No       | -                                     | Additional options passed to `zig build`              |
+| `SHARED`        | No       | Off                                   | Build as shared library instead of static             |
 
 #### Build Mode Mapping
 
 | CMake Build Type | Zig Optimize Mode |
-|------------------|-------------------|
-| `Debug` | `Debug` |
-| `Release` | `ReleaseFast` |
-| `RelWithDebInfo` | `ReleaseSafe` |
-| `MinSizeRel` | `ReleaseSmall` |
+| ---------------- | ----------------- |
+| `Debug`          | `Debug`           |
+| `Release`        | `ReleaseFast`     |
+| `RelWithDebInfo` | `ReleaseSafe`     |
+| `MinSizeRel`     | `ReleaseSmall`    |
 
 #### Example
 
 ```cmake
 add_zig_module(
-  NAME bare_addon_zig
-  PATH ${CMAKE_CURRENT_SOURCE_DIR}
-  TARGET bare_addon_zig
+  bare_addon_zig
   BUILD_OPTIONS -Dsome_option=value
 )
 ```
@@ -79,6 +72,7 @@ Locates the Zig executable.
 
 ```cmake
 find_zig(result)
+
 message(STATUS "Zig found at: ${result}")
 ```
 
@@ -101,6 +95,7 @@ zig_arch(arch)
 ```
 
 Supported architectures:
+
 - `aarch64` (arm64)
 - `arm` (armv7-a, armeabi-v7a)
 - `x86_64` (x64, amd64)
@@ -147,30 +142,31 @@ message(STATUS "Zig version: ${ver}")
 
 After calling `add_zig_module`, the following properties are set on the target:
 
-| Property | Description |
-|----------|-------------|
-| `ZIG_MODULE_NAME` | The module name |
-| `ZIG_MODULE_PATH` | Path to the Zig source |
-| `ZIG_BUILD_DIR` | Zig build directory |
-| `ZIG_OUT_DIR` | Zig output directory |
-| `ZIG_ARTIFACT_NAME` | Output artifact name |
+| Property            | Description            |
+| ------------------- | ---------------------- |
+| `ZIG_MODULE_NAME`   | The module name        |
+| `ZIG_MODULE_PATH`   | Path to the Zig source |
+| `ZIG_BUILD_DIR`     | Zig build directory    |
+| `ZIG_OUT_DIR`       | Zig output directory   |
+| `ZIG_ARTIFACT_NAME` | Output artifact name   |
 
 ## Build Outputs
 
 The Zig module is built to:
 
 ```
-${CMAKE_CURRENT_BINARY_DIR}/zig-build/${NAME}/zig-out/lib/lib${NAME}.a
+${CMAKE_CURRENT_BINARY_DIR}/_zig/${name}/out/lib/lib${name}.a
 ```
 
 For shared libraries (`SHARED` option):
-- Linux: `lib${NAME}.so`
-- macOS: `lib${NAME}.dylib`
-- Windows: `${NAME}.dll` + `${NAME}.lib` (import library)
+
+- Linux: `lib${name}.so`
+- macOS: `lib${name}.dylib`
+- Windows: `${name}.dll` + `${name}.lib` (import library)
 
 ## Cross-Compilation
 
-cmake-zig automatically detects the target platform from CMake variables:
+The module automatically detects the target platform from CMake variables:
 
 - **macOS/iOS**: Uses `CMAKE_OSX_ARCHITECTURES` and `CMAKE_OSX_DEPLOYMENT_TARGET`
 - **Android**: Uses `CMAKE_ANDROID_ARCH_ABI`
